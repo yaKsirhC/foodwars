@@ -27,10 +27,17 @@ setInterval(() => {
     console.log("Players", players);
 }, 1000);
 
-// Send all player data to clients every 5ms (200 times per second)
+// Send all player data to clients every 5ms (200 times per second) excluding the player's own data 
 setInterval(() => {
-    io.emit("updateAll", players);
+    for (const playerSocketId in players) {
+        const otherPlayers = { ...players };
+        delete otherPlayers[playerSocketId];
+
+        // Emit the updated data to the current player
+        io.to(playerSocketId).emit("updateAll", otherPlayers);
+    }
 }, 5);
+
 
 const port = 6969;
 app.use(express.static('public'));
