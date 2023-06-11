@@ -3,19 +3,16 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
+const server = createServer(app);
+const io = new Server(server);
 
-console.log("server started");
+console.log("SERVER STARTED");
 io.on('connection', (socket) => { 
     console.log("socket", socket.id, "connected");
 });
 
-const test = require("./test.js");
-
 const port = 6969;
 app.use(express.static('public'));
-httpServer.listen(port);
+app.use('/pixi', express.static('./node_modules/pixi.js/dist/'));
+server.listen(port);
 
-console.log(__dirname)
-console.log(__filename)
