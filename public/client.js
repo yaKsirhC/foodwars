@@ -100,7 +100,8 @@ function shoot(rotation, startPosition){
     var bullet = Sprite.from(texture);
     bullet.x = startPosition.x;
     bullet.y = startPosition.y;
-    bullet.rotation = rotation;
+    bullet.rotation = rotation - Math.PI/2;
+    bullet.anchor.set(0.5, 0.5);
     app.stage.addChild(bullet);
     bullets.push(bullet);
   }
@@ -151,7 +152,7 @@ socket.on("updateAll", (players) => {
 
 // While game is running
 app.ticker.add(() => {
-    socket.emit("serverUpdateSelf", {id: socket.id, x: player.x, y: player.y, rotation: player.rotation})
+    socket.emit("serverUpdateSelf", {id: socket.id, x: player.x, y: player.y, rotation: player.rotation + (2 * Math.PI)})
 
     for(var b=bullets.length-1;b>=0;b--){
         bullets[b].position.x += Math.cos(bullets[b].rotation)*bulletSpeed;
@@ -186,7 +187,7 @@ app.ticker.add(() => {
     app.stage.position.y = app.renderer.height / 2 - camera.y;
 
     let rotation = Math.atan2(mouse.y-(app.renderer.height/2), mouse.x-(app.renderer.width/2));
-    player.rotation = rotation;
+    player.rotation = rotation + Math.PI/2;
 });
 
 // Put on the canvas

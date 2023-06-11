@@ -27,6 +27,7 @@ setInterval(() => {
     console.log("Players", players);
 }, 1000);
 
+// Send all player data to clients every 5ms (200 times per second)
 setInterval(() => {
     io.emit("updateAll", players);
 }, 5);
