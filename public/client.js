@@ -68,6 +68,11 @@ const keyboard = {
 
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
+window.addEventListener("mousedown", handleMouseDown);
+
+
+let bullets = [];  
+let bulletSpeed = 100;
 
 // Key event handler
 function handleKeyDown(event) {
@@ -84,11 +89,32 @@ function handleKeyUp(event) {
     }
 }
 
+function handleMouseDown(event) {
+    shoot(player.rotation, {
+        x: player.x + Math.cos(player.rotation) * 20,
+        y: player.y + Math.sin(player.rotation) * 20,
+    });
+}
+
+function shoot(rotation, startPosition){  
+    var bullet = Sprite.from(texture);
+    bullet.x = startPosition.x;
+    bullet.y = startPosition.y;
+    bullet.rotation = rotation;
+    app.stage.addChild(bullet);
+    bullets.push(bullet);
+  }
+
 // While game is running
 app.ticker.add(() => {
+    for(var b=bullets.length-1;b>=0;b--){
+        bullets[b].position.x += Math.cos(bullets[b].rotation)*bulletSpeed;
+        bullets[b].position.y += Math.sin(bullets[b].rotation)*bulletSpeed;
+      }
+
     let speed = 5;
     if (keyboard.shift) {
-        speed *= 2;
+        speed += 5;
     }
 
     if (keyboard.w) {
@@ -113,10 +139,8 @@ app.ticker.add(() => {
     app.stage.position.x = app.renderer.width / 2 - camera.x;
     app.stage.position.y = app.renderer.height / 2 - camera.y;
 
-    console.log(app.renderer.interaction);
-    let rotation = Math.atan2(mouse.y-(app.renderer.width/2), mouse.x-(app.renderer.height/2));
+    let rotation = Math.atan2(mouse.y-(app.renderer.height/2), mouse.x-(app.renderer.width/2));
     player.rotation = rotation;
-    console.log("player rot:" + player.rotation + " rotation: " + rotation)
 });
 
 // Put on the canvas
