@@ -6,13 +6,32 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+let players = {};
+
 console.log("SERVER STARTED");
 io.on('connection', (socket) => { 
-    console.log("socket", socket.id, "connected");
+    console.log("SERVER: socket", socket.id, "connected");
+
+    // takes individual player data and updates the server's copy of that player
+    socket.on("serverUpdateSelf", (playerData) => {
+        players[playerData.id] = playerData;
+    });
+
+    socket.on("disconnect", () => {
+        console.log("SERVER: socket", socket.id, "disconnected");
+        delete players[socket.id];
+    });
 });
+
+setInterval(() => {
+    console.log("Players", players);
+}, 1000);
+
+setInterval(() => {
+    io.emit("updateAll", players);
+}, 5);
 
 const port = 6969;
 app.use(express.static('public'));
 app.use('/pixi', express.static('./node_modules/pixi.js/dist/'));
 server.listen(port);
-

@@ -105,8 +105,54 @@ function shoot(rotation, startPosition){
     bullets.push(bullet);
   }
 
+  // Create a new PIXI Text object
+const text = new PIXI.Text(socket.id, {
+    fontFamily: "Arial",
+    fontSize: 24,
+    fill: 0xffffff, // Color in hexadecimal format
+  });
+  
+  // Set the position of the text
+  text.x = 100;
+  text.y = 100;
+  
+  // Add the text to the stage
+  app.stage.addChild(text);
+
+  const playerSprites = {}; // Object to store the player sprites
+
+  function renderPlayer(playerData) {
+      if (!playerSprites[playerData.id]) {
+          // Create a new PIXI sprite for the player
+          const otherPlayer = Sprite.from(texture);
+          otherPlayer.scale.set(5, 5);
+          otherPlayer.anchor.set(0.5, 0.5);
+          app.stage.addChild(otherPlayer);
+          playerSprites[playerData.id] = otherPlayer;
+      }
+  
+      const playerSprite = playerSprites[playerData.id];
+      playerSprite.x = playerData.x;
+      playerSprite.y = playerData.y;
+      playerSprite.rotation = playerData.rotation;
+  }
+  
+
+socket.on("updateAll", (players) => {
+    for (const playerId in players) {
+        console.log(players);
+        if (playerId !== socket.id) {
+
+            const playerData = players[playerId];
+            renderPlayer(playerData);
+        }
+    }
+});
+
 // While game is running
 app.ticker.add(() => {
+    socket.emit("serverUpdateSelf", {id: socket.id, x: player.x, y: player.y, rotation: player.rotation})
+
     for(var b=bullets.length-1;b>=0;b--){
         bullets[b].position.x += Math.cos(bullets[b].rotation)*bulletSpeed;
         bullets[b].position.y += Math.sin(bullets[b].rotation)*bulletSpeed;
