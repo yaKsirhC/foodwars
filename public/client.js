@@ -213,7 +213,20 @@ const bulletSpeed = 100;
 
 const bulletTexture = await Assets.load("images/bullet.png");
 
+let isMouseDown = false;
+let emitIntervalId = null;
+
 function handleMouseDown(event) {
+  isMouseDown = true;
+  emitBulletsContinuously();
+}
+
+function handleMouseUp(event) {
+  isMouseDown = false;
+  clearInterval(emitIntervalId);
+}
+
+function emitBullet() {
   const offsetFactor = 70; // Adjust this value to control the offset
   
   socket.emit("serverUpdateNewBullet", {
@@ -225,6 +238,23 @@ function handleMouseDown(event) {
     rotation: player.rotation - Math.PI/2,
   });
 }
+
+function emitBulletsContinuously() {
+  emitBullet(); // Emit the first bullet immediately
+  
+  // Start emitting bullets continuously at a fixed interval
+  emitIntervalId = setInterval(() => {
+    if (isMouseDown) {
+      emitBullet();
+    } else {
+      clearInterval(emitIntervalId);
+    }
+  }, 100); // Adjust the interval as needed
+}
+
+// Attach event listeners
+document.addEventListener("mousedown", handleMouseDown);
+document.addEventListener("mouseup", handleMouseUp);
 
 
 socket.on("clientUpdateNewBullet", (bulletData) => {
@@ -256,6 +286,52 @@ socket.on("updateAllBullets", (bulletsData) => {
     boundingBox.width = bulletsData[bulletId].width;
     boundingBox.height = bulletsData[bulletId].height;
   });
+});
+
+// NOTIFICATIONS
+let notifications = [];
+
+const notificationContainer = new PIXI.Container();
+let notificationOffsetY = 0;
+
+function notification(text) {
+  const notificationBar = new Graphics();
+  notificationBar.beginFill(0x000000, 0.5);
+  notificationBar.drawRoundedRect(0, 0, 400, 30, 5);
+  notificationBar.endFill();
+  notificationBar.x = -5;
+  notificationBar.y = notificationOffsetY;
+
+  const notification = new PIXI.Text(text, {
+    fontFamily: "Arial",
+    fontSize: 20,
+    fill: "white",
+    align: "center",
+  });
+  notification.x = 0;
+  notification.y = notificationOffsetY;
+
+  notificationOffsetY += 40; // Increase the offset for the next notification
+
+  notificationContainer.addChild(notificationBar);
+  notificationContainer.addChild(notification);
+
+  setTimeout(() => {
+    notificationContainer.removeChild(notification);
+    notificationContainer.removeChild(notificationBar);
+
+    // Adjust the position of remaining notifications
+    notificationOffsetY -= 40;
+    notificationContainer.children.forEach((child) => {
+      child.y -= 40;
+    });
+  }, 3000);
+}
+
+
+
+socket.on("notification", (text) => {
+  notification(text);
 });
 
 // MAIN GAME LOOP
@@ -303,6 +379,9 @@ app.ticker.add(() => {
 
   shieldBar.x = camera.x - 925;
   shieldBar.y = camera.y + 400;
+
+  notificationContainer.x = camera.x + 550;
+  notificationContainer.y = camera.y - 420;
 });
 
 // DISPLAY ON CANVAS
@@ -316,3 +395,4 @@ app.stage.addChild(healthBar);
 app.stage.addChild(healthBarValue);
 app.stage.addChild(shieldBar);
 app.stage.addChild(coordinatesText);
+app.stage.addChild(notificationContainer);

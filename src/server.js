@@ -13,6 +13,7 @@ const bulletSpeed = 100;
 // io connections
 io.on('connection', (socket) => { 
     console.log("SERVER: socket", socket.id, "connected");
+    io.emit("notification", socket.id + " connected");
 
     // updates the player
     socket.on("serverUpdateSelf", (playerData) => {
@@ -43,18 +44,19 @@ io.on('connection', (socket) => {
 
         Object.entries(bullets).forEach(([key, bullet]) => {
         if (checkCollision(bullet, playerBounds)) {
-            console.log("Collision detected!" + Math.random());
             playerData.health -= 10;
             delete bullets[key];
         }
         });
 
-        if (playerData.health == 0) {
-            console.log(playerData.id + " died");
-        }
-
         socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
+
+        if (playerData.health == 0) {
+            console.log(playerData.id + " died");
+            io.emit("notification", playerData.id + " died");
+            socket.disconnect();
+        }
     });
 
     socket.on("serverUpdateNewBullet", (bulletData) => {
@@ -64,6 +66,7 @@ io.on('connection', (socket) => {
 
     socket.on("disconnect", () => {
         console.log("SERVER: socket", socket.id, "disconnected");
+        io.emit("notification", socket.id + " disconnected");
         delete players[socket.id];
     });
 });
@@ -101,7 +104,7 @@ setInterval(() => {
             delete players[playerSocketId];
         }
     }
-    console.log("Players", players);
+    //console.log("Players", players);
 }, 1500);
 
 // HELPER FUNCTIONS
