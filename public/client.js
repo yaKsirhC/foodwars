@@ -7,7 +7,7 @@ socket.on("connect", () => {
   console.log("socket", socket.id, "connected");
 });
 
-// PIXI
+// BASIC SETUP
 const app = new Application({
   width: 500,
   height: 500,
@@ -29,33 +29,50 @@ const Graphics = PIXI.Graphics;
 const sample = new Graphics();
 sample.beginFill(0xffffff).drawRect(0, 0, 200, 2000).endFill();
 
-const playerTexture = await Assets.load("images/player.png");
-const player = Sprite.from(playerTexture);
-player.x = 0;
-player.y = 0;
-player.scale.set(2, 2);
-player.anchor.set(0.5, 0.5);
+// DRAW UI ELEMENTS
+const socketText = new PIXI.Text("SOCKET ID: " + socket.id, {
+  fontFamily: "Arial",
+  fontSize: 10,
+  fill: 'ffffff',
+});
+socketText.x = 0;
+socketText.y = 0;
 
-// Mouse events
+const inventory = new Graphics();
+inventory.lineStyle({width: 2, color: 0x000000, alpha: 0.5});
+inventory.beginFill(0x222222);
+inventory.drawRoundedRect(0, 0, 500, 55, 5);
+inventory.endFill();
+inventory.x = 0;
+inventory.y = 0;
+
+const healthBar = new Graphics();
+healthBar.lineStyle({width: 2, color: 0x000000, alpha: 0.5});
+healthBar.beginFill(0x13EA22);
+healthBar.drawRoundedRect(0, 0, 500, 30, 5);
+healthBar.endFill();
+healthBar.x = 0;
+healthBar.y = 0;
+
+const shieldBar = new Graphics();
+shieldBar.lineStyle({width: 3, color: 0x000000, alpha: 0.3});
+shieldBar.beginFill(0x0198EF);
+shieldBar.drawRoundedRect(0, 0, 500, 25, 5);
+shieldBar.endFill();
+shieldBar.x = 0;
+shieldBar.y = 0;
+
+// CHANGING PROPERTIES
 const mouse = {
   x: 0,
   y: 0,
 };
 
-window.addEventListener("mousemove", handleMouseMove);
-
-function handleMouseMove(event) {
-  mouse.x = event.clientX;
-  mouse.y = event.clientY;
-}
-
-// Camera properties
 const camera = {
   x: app.renderer.width / 2,
   y: app.renderer.height / 2,
 };
 
-// Create a keyboard state object to keep track of the key states
 const keyboard = {
   w: false,
   a: false,
@@ -64,11 +81,13 @@ const keyboard = {
   shift: false,
 };
 
+// EVENT LISTENERS
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
+window.addEventListener("mousemove", handleMouseMove);
 window.addEventListener("mousedown", handleMouseDown);
 
-// Key event handler
+// KEY EVENT HANDLER FUNCTIONS
 function handleKeyDown(event) {
   const key = event.key.toLowerCase();
   if (keyboard.hasOwnProperty(key)) {
@@ -82,55 +101,59 @@ function handleKeyUp(event) {
     keyboard[key] = false;
   }
 }
-// Create a new PIXI Text object
-const text = new PIXI.Text(socket.id, {
-  fontFamily: "Arial",
-  fontSize: 24,
-  fill: 0xffffff,
-});
 
-// Set the position of the text
-text.x = 100;
-text.y = 100;
-
-const playerSprites = {}; // Object to store the player sprites
-
-const enemyTexture = await Assets.load("images/enemies.png");
-function renderPlayer(playerData) {
-  if (!playerSprites[playerData.id]) {
-    // Create a new PIXI sprite for the player
-    const otherPlayer = Sprite.from(enemyTexture);
-    otherPlayer.scale.set(2, 2);
-    otherPlayer.anchor.set(0.5, 0.5);
-    app.stage.addChild(otherPlayer);
-    playerSprites[playerData.id] = otherPlayer;
-  }
-
-  const playerSprite = playerSprites[playerData.id];
-  playerSprite.x = playerData.x;
-  playerSprite.y = playerData.y;
-  playerSprite.rotation = playerData.rotation;
+function handleMouseMove(event) {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
 }
 
-socket.on("clientUpdateAllPlayers", (players) => {
-  const connectedPlayerIds = Object.keys(players);
+// PLAYERS
+const enemySprites = {}; // Stores the other player sprites
+
+const playerTexture = await Assets.load("images/player.png");
+const player = Sprite.from(playerTexture);
+player.x = 0;
+player.y = 0;
+player.scale.set(2, 2);
+player.anchor.set(0.5, 0.5);
+
+const enemyTexture = await Assets.load("images/enemies.png");
+function renderPlayer(enemyData) {
+  if (!enemySprites[enemyData.id]) {
+    // Create a new PIXI sprite for the player
+    const enemySprite = Sprite.from(enemyTexture);
+    enemySprite.scale.set(2, 2);
+    enemySprite.anchor.set(0.5, 0.5);
+    app.stage.addChild(enemySprite);
+    enemySprites[enemyData.id] = enemySprite;
+  }
+
+  const enemySprite = enemySprites[enemyData.id];
+  enemySprite.x = enemyData.x;
+  enemySprite.y = enemyData.y;
+  enemySprite.rotation = enemyData.rotation;
+}
+
+socket.on("clientUpdateAllEnemies", (enemies) => {
+  const connectedEnemyIds = Object.keys(enemies);
   // Iterate over the existing player sprites
-  for (const playerId in playerSprites) {
+  for (const enemyId in enemySprites) {
     // Check if the player is still connected
-    if (!connectedPlayerIds.includes(playerId)) {
+    if (!connectedEnemyIds.includes(enemyId)) {
       // Player is disconnected, remove the sprite
-      const playerSprite = playerSprites[playerId];
-      app.stage.removeChild(playerSprite);
-      delete playerSprites[playerId];
+      const enemySprite = enemySprites[enemyId];
+      app.stage.removeChild(enemySprite);
+      delete enemySprites[enemyId];
     }
   }
-  
-  for (const playerId in players) {
-    const playerData = players[playerId];
-    renderPlayer(playerData);
+
+  for (const enemyId in enemies) {
+    const enemyData = enemies[enemyId];
+    renderPlayer(enemyData);
   }
 });
 
+// BULLETS
 let bullets = [];
 const bulletSpeed = 100;
 
@@ -156,61 +179,76 @@ socket.on("clientUpdateNewBullet", (bulletData) => {
   bullets.push(bullet);
 });
 
+socket.on("clientUpdateSelf", (playerData) => {
+  player.x = playerData.x;
+  player.y = playerData.y;
+  player.rotation = playerData.rotation;
+});
+
 // While game is running
 app.ticker.add(() => {
   socket.emit("serverUpdateSelf", {
     id: socket.id,
     x: player.x,
     y: player.y,
-    rotation: player.rotation + 2 * Math.PI,
+    rotation: Math.atan2(
+      mouse.y - app.renderer.height / 2,
+      mouse.x - app.renderer.width / 2
+    ) + Math.PI / 2, //2 * Math.PI
+    keyboard: keyboard,
   });
+
+  // HANDLING/CHECKING COLLISIONS
+  for (const enemyID in enemySprites) {
+    if (checkCollision(player, enemySprites[enemyID])) { 
+      console.log("collision");
+    }
+  }
 
   for (var b = bullets.length - 1; b >= 0; b--) {
     bullets[b].x += Math.cos(bullets[b].rotation) * bulletSpeed;
     bullets[b].y += Math.sin(bullets[b].rotation) * bulletSpeed;
   }
 
-  let speed = 5;
-  if (keyboard.shift) {
-    speed += 5;
-  }
-
-  if (keyboard.w) {
-    player.y -= speed;
-  }
-
-  if (keyboard.a) {
-    player.x -= speed;
-  }
-
-  if (keyboard.s) {
-    player.y += speed;
-  }
-
-  if (keyboard.d) {
-    player.x += speed;
-  }
-
   // Adjust the camera position to keep the player in the middle
-  camera.x = player.x + player.width / 2;
-  camera.y = player.y + player.height / 2;
+  camera.x = player.x;
+  camera.y = player.y;
   app.stage.position.x = app.renderer.width / 2 - camera.x;
   app.stage.position.y = app.renderer.height / 2 - camera.y;
 
   // Shift UI elements with Camera
-  text.x = player.x + 100;
-  text.y = player.y + 100;
+  socketText.x = camera.x + 765;
+  socketText.y = camera.y + 460;
 
-  let rotation = Math.atan2(
-    mouse.y - app.renderer.height / 2,
-    mouse.x - app.renderer.width / 2
-  );
-  player.rotation = rotation + Math.PI / 2;
+  inventory.x = camera.x - 250;
+  inventory.y = camera.y + 400;
+
+  healthBar.x = camera.x - 925;
+  healthBar.y = camera.y + 430;
+
+  shieldBar.x = camera.x - 925;
+  shieldBar.y = camera.y + 400;
 });
 
-// Put on the canvas
+// HELPER FUNCTIONS
+function checkCollision(a, b) {
+  var aBox = a.getBounds();
+  var bBox = b.getBounds();
+
+  return (
+    aBox.x + aBox.width > bBox.x &&
+    aBox.x < bBox.x + bBox.width &&
+    aBox.y + aBox.height > bBox.y &&
+    aBox.y < bBox.y + bBox.height
+  );
+}
+
+// DISPLAY ON CANVAS
 document.body.appendChild(app.view);
 app.stage.addChild(backgroundSprite);
 app.stage.addChild(player);
 app.stage.addChild(sample);
-app.stage.addChild(text);
+app.stage.addChild(socketText);
+app.stage.addChild(inventory);
+app.stage.addChild(healthBar);
+app.stage.addChild(shieldBar);

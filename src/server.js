@@ -16,6 +16,26 @@ io.on('connection', (socket) => {
 
     // takes individual player data and updates the server's copy of that player
     socket.on("serverUpdateSelf", (playerData) => {
+        console.log(playerData);
+        let speed = 5;
+        if (playerData.keyboard.shift) {
+            speed += 5;
+        }
+
+        if (playerData.keyboard.w) {
+            playerData.y -= speed;
+        }
+        if (playerData.keyboard.a) {
+            playerData.x -= speed;
+        }
+        if (playerData.keyboard.s) {
+            playerData.y += speed;
+        }
+        if (playerData.keyboard.d) {
+            playerData.x += speed;
+        }
+
+        socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
     });
 
@@ -34,11 +54,11 @@ io.on('connection', (socket) => {
 // Send all player data to clients every 5ms (200 times per second) excluding the player's own data 
 setInterval(() => {
     for (const playerSocketId in players) {
-        const otherPlayers = { ...players };
-        delete otherPlayers[playerSocketId];
+        const enemies = { ...players };
+        delete enemies[playerSocketId];
 
         // Emit the updated data to the current player
-        io.to(playerSocketId).emit("clientUpdateAllPlayers", otherPlayers);
+        io.to(playerSocketId).emit("clientUpdateAllEnemies", enemies);
     }
 }, 5);
 
@@ -49,7 +69,7 @@ setInterval(() => {
         bullet.x += Math.cos(bullet.rotation) * bulletSpeed;
         bullet.y += Math.sin(bullet.rotation) * bulletSpeed;
     }
-}, 5);
+}, 10);
 
 setInterval(() => {
     for (const playerSocketId in players) {
