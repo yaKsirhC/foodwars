@@ -44,10 +44,14 @@ io.on('connection', (socket) => {
         Object.entries(bullets).forEach(([key, bullet]) => {
         if (checkCollision(bullet, playerBounds)) {
             console.log("Collision detected!" + Math.random());
-            playerData.health -= 1;
+            playerData.health -= 10;
             delete bullets[key];
         }
         });
+
+        if (playerData.health == 0) {
+            console.log(playerData.id + " died");
+        }
 
         socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
@@ -81,14 +85,14 @@ setInterval(() => {
     io.emit("updateAllBullets", bullets);
     for (const bulletId in bullets) {
         const bullet = bullets[bulletId];
-        bullet.x += Math.cos(bullet.rotation) * bulletSpeed;
-        bullet.y += Math.sin(bullet.rotation) * bulletSpeed;
+        bullet.x += Math.cos(bullet.rotation) * bulletSpeed / 4;
+        bullet.y += Math.sin(bullet.rotation) * bulletSpeed / 4;
 
         if (bullet.x > 10000 || bullet.x < -10000 || bullet.y > 10000 || bullet.y < -10000 ) {
             delete bullets[bulletId];
         }
     }
-}, 1);
+}, 0.1);
 
 
 setInterval(() => {
@@ -97,7 +101,7 @@ setInterval(() => {
             delete players[playerSocketId];
         }
     }
-    //console.log("Players", players);
+    console.log("Players", players);
 }, 1500);
 
 // HELPER FUNCTIONS

@@ -29,13 +29,12 @@ const Graphics = PIXI.Graphics;
 const sample = new Graphics();
 sample.beginFill(0xffffff).drawRect(0, 0, 200, 2000).endFill();
 
-let health = 100;
-
 // ADDING PLAYER FIRST SO I CAN PUT COORDINATESTEXT
 const playerTexture = await Assets.load("images/player.png");
 const player = Sprite.from(playerTexture);
 player.scale.set(2, 2);
 player.anchor.set(0.5, 0.5);
+let health = 100;
 
 // DRAW UI ELEMENTS
 const coordinatesText = new PIXI.Text("x: " + player.x + " y: " + player.y, {
@@ -68,11 +67,18 @@ inventory.y = 0;
 
 const healthBar = new Graphics();
 healthBar.lineStyle({width: 2, color: 0x000000, alpha: 0.5});
-healthBar.beginFill(0x13EA22);
+healthBar.beginFill(0x222222);
 healthBar.drawRoundedRect(0, 0, 500, 30, 5);
 healthBar.endFill();
 healthBar.x = 0;
 healthBar.y = 0;
+
+const healthBarValue = new Graphics();
+healthBarValue.beginFill(0x13EA22);
+healthBarValue.drawRoundedRect(0, 0, 500, 30, 5);
+healthBarValue.endFill();
+healthBarValue.x = 0;
+healthBarValue.y = 0;
 
 const shieldBar = new Graphics();
 shieldBar.lineStyle({width: 3, color: 0x000000, alpha: 0.3});
@@ -169,9 +175,15 @@ socket.on("clientUpdateAllEnemies", (enemies) => {
 let boundingBoxes = {};
 
 socket.on("clientUpdateSelf", (playerData) => {
+  console.log(playerData.health);
+  if (playerData.health < 100) {
+    healthBarValue.width = playerData.health * 5;
+  }
+
   player.x = playerData.x;
   player.y = playerData.y;
   player.rotation = playerData.rotation;
+  health = playerData.health;
 
   if (!boundingBoxes[playerData.id]) {
     const boundingBox = new Graphics();
@@ -286,6 +298,9 @@ app.ticker.add(() => {
   healthBar.x = camera.x - 925;
   healthBar.y = camera.y + 430;
 
+  healthBarValue.x = camera.x - 925;
+  healthBarValue.y = camera.y + 430;
+
   shieldBar.x = camera.x - 925;
   shieldBar.y = camera.y + 400;
 });
@@ -298,5 +313,6 @@ app.stage.addChild(sample);
 app.stage.addChild(socketText);
 app.stage.addChild(inventory);
 app.stage.addChild(healthBar);
+app.stage.addChild(healthBarValue);
 app.stage.addChild(shieldBar);
 app.stage.addChild(coordinatesText);
