@@ -38,8 +38,8 @@ io.on('connection', (socket) => {
         const playerBounds = {
             x: playerData.x,
             y: playerData.y,
-            width: playerData.width,
-            height: playerData.height
+            width: 50,
+            height: 50
           };
 
         Object.entries(bullets).forEach(([key, bullet]) => {
@@ -105,6 +105,7 @@ setInterval(() => {
         }
     }
     //console.log("Players", players);
+    console.log(Object.keys(bullets).length);
 }, 1500);
 
 // HELPER FUNCTIONS

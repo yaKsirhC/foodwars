@@ -8,6 +8,8 @@ socket.on("connect", () => {
 });
 
 // BASIC SETUP
+const BOUNDING_BOXES = false;
+
 const app = new Application({
   width: 500,
   height: 500,
@@ -175,7 +177,6 @@ socket.on("clientUpdateAllEnemies", (enemies) => {
 let boundingBoxes = {};
 
 socket.on("clientUpdateSelf", (playerData) => {
-  console.log(playerData.health);
   if (playerData.health < 100) {
     healthBarValue.width = playerData.health * 5;
   }
@@ -185,26 +186,21 @@ socket.on("clientUpdateSelf", (playerData) => {
   player.rotation = playerData.rotation;
   health = playerData.health;
 
-  if (!boundingBoxes[playerData.id]) {
-    const boundingBox = new Graphics();
-    boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
-    boundingBox.drawRect(-playerData.width / 2, -playerData.height / 2, playerData.width, playerData.height);
-    app.stage.addChild(boundingBox);
-    boundingBoxes[playerData.id] = boundingBox;
+  if (BOUNDING_BOXES) {
+    if (!boundingBoxes[playerData.id]) {
+      const boundingBox = new Graphics();
+      boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
+      boundingBox.drawRect(-playerData.width / 2, -playerData.height / 2, playerData.width, playerData.height);
+      app.stage.addChild(boundingBox);
+      boundingBoxes[playerData.id] = boundingBox;
+    }
+  
+    const boundingBox = boundingBoxes[playerData.id];
+    boundingBox.x = playerData.x;
+    boundingBox.y = playerData.y;
+    boundingBox.width = playerData.width;
+    boundingBox.height = playerData.height;
   }
-
-  const boundingBox = boundingBoxes[playerData.id];
-  boundingBox.x = playerData.x;
-  boundingBox.y = playerData.y;
-  boundingBox.width = playerData.width;
-  boundingBox.height = playerData.height;
-
-  console.log(
-    playerData.x,
-    playerData.y,
-    playerData.width,
-    playerData.height
-  );
 });
 
 // BULLETS
@@ -249,7 +245,7 @@ function emitBulletsContinuously() {
     } else {
       clearInterval(emitIntervalId);
     }
-  }, 100); // Adjust the interval as needed
+  }, 200); // Adjust the interval as needed
 }
 
 // Attach event listeners
@@ -271,21 +267,23 @@ socket.on("clientUpdateNewBullet", (bulletData) => {
 });
 
 socket.on("updateAllBullets", (bulletsData) => {
-  Object.keys(bulletsData).forEach((bulletId) => {
-    if (!boundingBoxes[bulletId]) {
-      const boundingBox = new Graphics();
-      boundingBox.lineStyle({width: 1, color: 0x00FF00, alpha: 1});
-      boundingBox.drawRect(-bulletsData[bulletId].width / 2, -bulletsData[bulletId].height / 2, bulletsData[bulletId].width, bulletsData[bulletId].height);
-      app.stage.addChild(boundingBox);
-      boundingBoxes[bulletId] = boundingBox;
-    }
-
-    const boundingBox = boundingBoxes[bulletId];
-    boundingBox.x = bulletsData[bulletId].x;
-    boundingBox.y = bulletsData[bulletId].y;
-    boundingBox.width = bulletsData[bulletId].width;
-    boundingBox.height = bulletsData[bulletId].height;
-  });
+  if (BOUNDING_BOXES) {
+    Object.keys(bulletsData).forEach((bulletId) => {
+      if (!boundingBoxes[bulletId]) {
+        const boundingBox = new Graphics();
+        boundingBox.lineStyle({width: 1, color: 0x00FF00, alpha: 1});
+        boundingBox.drawRect(-bulletsData[bulletId].width / 2, -bulletsData[bulletId].height / 2, bulletsData[bulletId].width, bulletsData[bulletId].height);
+        app.stage.addChild(boundingBox);
+        boundingBoxes[bulletId] = boundingBox;
+      }
+  
+      const boundingBox = boundingBoxes[bulletId];
+      boundingBox.x = bulletsData[bulletId].x;
+      boundingBox.y = bulletsData[bulletId].y;
+      boundingBox.width = bulletsData[bulletId].width;
+      boundingBox.height = bulletsData[bulletId].height;
+    });
+  }
 });
 
 // NOTIFICATIONS
@@ -341,8 +339,6 @@ app.ticker.add(() => {
     health: health,
     x: player.x,
     y: player.y,
-    width: 50,
-    height: 50,
     rotation: Math.atan2(
       mouse.y - app.renderer.height / 2,
       mouse.x - app.renderer.width / 2
