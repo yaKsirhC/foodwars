@@ -14,9 +14,8 @@ const bulletSpeed = 100;
 io.on('connection', (socket) => { 
     console.log("SERVER: socket", socket.id, "connected");
 
-    // takes individual player data and updates the server's copy of that player
+    // updates the player
     socket.on("serverUpdateSelf", (playerData) => {
-        console.log(playerData);
         let speed = 5;
         if (playerData.keyboard.shift) {
             speed += 5;
@@ -34,6 +33,21 @@ io.on('connection', (socket) => {
         if (playerData.keyboard.d) {
             playerData.x += speed;
         }
+
+        const playerBounds = {
+            x: playerData.x,
+            y: playerData.y,
+            width: playerData.width,
+            height: playerData.height
+          };
+
+        Object.entries(bullets).forEach(([key, bullet]) => {
+        if (checkCollision(bullet, playerBounds)) {
+            console.log("Collision detected!" + Math.random());
+            playerData.health -= 1;
+            delete bullets[key];
+        }
+        });
 
         socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
@@ -65,11 +79,17 @@ setInterval(() => {
 // Calculate bullet trajectory (server side) (200 times per second)
 setInterval(() => {
     io.emit("updateAllBullets", bullets);
-    for (const bullet in bullets) {
+    for (const bulletId in bullets) {
+        const bullet = bullets[bulletId];
         bullet.x += Math.cos(bullet.rotation) * bulletSpeed;
         bullet.y += Math.sin(bullet.rotation) * bulletSpeed;
+
+        if (bullet.x > 10000 || bullet.x < -10000 || bullet.y > 10000 || bullet.y < -10000 ) {
+            delete bullets[bulletId];
+        }
     }
-}, 10);
+}, 1);
+
 
 setInterval(() => {
     for (const playerSocketId in players) {
@@ -77,8 +97,16 @@ setInterval(() => {
             delete players[playerSocketId];
         }
     }
-    console.log("Players", players);
-}, 1000);
+    //console.log("Players", players);
+}, 1500);
+
+// HELPER FUNCTIONS
+function checkCollision(aBox, bBox) {
+    return aBox.x < bBox.x + bBox.width &&
+           aBox.x + aBox.width > bBox.x &&
+           aBox.y < bBox.y + bBox.height &&
+           aBox.y + aBox.height > bBox.y;
+  }
 
 // final setup
 const port = 6969;
