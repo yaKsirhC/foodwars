@@ -112,6 +112,25 @@ function renderPlayer(playerData) {
   playerSprite.rotation = playerData.rotation;
 }
 
+socket.on("clientUpdateAllPlayers", (players) => {
+  const connectedPlayerIds = Object.keys(players);
+  // Iterate over the existing player sprites
+  for (const playerId in playerSprites) {
+    // Check if the player is still connected
+    if (!connectedPlayerIds.includes(playerId)) {
+      // Player is disconnected, remove the sprite
+      const playerSprite = playerSprites[playerId];
+      app.stage.removeChild(playerSprite);
+      delete playerSprites[playerId];
+    }
+  }
+  
+  for (const playerId in players) {
+    const playerData = players[playerId];
+    renderPlayer(playerData);
+  }
+});
+
 let bullets = [];
 const bulletSpeed = 100;
 
@@ -125,13 +144,6 @@ function handleMouseDown(event) {
     rotation: player.rotation,
   });
 }
-
-socket.on("updateAllPlayers", (players) => {
-  for (const playerId in players) {
-    const playerData = players[playerId];
-    renderPlayer(playerData);
-  }
-});
 
 socket.on("clientUpdateNewBullet", (bulletData) => {
   const bullet = Sprite.from(bulletTexture);

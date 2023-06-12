@@ -38,7 +38,7 @@ setInterval(() => {
         delete otherPlayers[playerSocketId];
 
         // Emit the updated data to the current player
-        io.to(playerSocketId).emit("updateAllPlayers", otherPlayers);
+        io.to(playerSocketId).emit("clientUpdateAllPlayers", otherPlayers);
     }
 }, 5);
 
