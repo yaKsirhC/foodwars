@@ -68,9 +68,6 @@ window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 window.addEventListener("mousedown", handleMouseDown);
 
-let bullets = [];
-let bulletSpeed = 100;
-
 // Key event handler
 function handleKeyDown(event) {
   const key = event.key.toLowerCase();
@@ -85,30 +82,11 @@ function handleKeyUp(event) {
     keyboard[key] = false;
   }
 }
-
-function handleMouseDown(event) {
-  shoot(player.rotation, {
-    x: player.x + Math.cos(player.rotation) * 20,
-    y: player.y + Math.sin(player.rotation) * 20,
-  });
-}
-
-const bulletTexture = await Assets.load("images/bullet.png");
-function shoot(rotation, startPosition) {
-  var bullet = Sprite.from(bulletTexture);
-  bullet.x = startPosition.x;
-  bullet.y = startPosition.y;
-  bullet.rotation = rotation - Math.PI / 2;
-  bullet.anchor.set(0.5, 0.5);
-  app.stage.addChild(bullet);
-  bullets.push(bullet);
-}
-
 // Create a new PIXI Text object
 const text = new PIXI.Text(socket.id, {
   fontFamily: "Arial",
   fontSize: 24,
-  fill: 0xffffff, // Color in hexadecimal format
+  fill: 0xffffff,
 });
 
 // Set the position of the text
@@ -134,14 +112,36 @@ function renderPlayer(playerData) {
   playerSprite.rotation = playerData.rotation;
 }
 
-socket.on("updateAll", (players) => {
+let bullets = [];
+const bulletSpeed = 100;
+
+const bulletTexture = await Assets.load("images/bullet.png");
+
+function handleMouseDown(event) {
+  socket.emit("serverUpdateNewBullet", {
+    id: Math.random(),
+    x: player.x + Math.cos(player.rotation) * 20,
+    y: player.y + Math.sin(player.rotation) * 20,
+    rotation: player.rotation,
+  });
+}
+
+socket.on("updateAllPlayers", (players) => {
   for (const playerId in players) {
-    console.log(players);
-    if (playerId !== socket.id) {
-      const playerData = players[playerId];
-      renderPlayer(playerData);
-    }
+    const playerData = players[playerId];
+    renderPlayer(playerData);
   }
+});
+
+socket.on("clientUpdateNewBullet", (bulletData) => {
+  const bullet = Sprite.from(bulletTexture);
+  bullet.scale.set(1, 1);
+  bullet.anchor.set(0.5, 0.5);
+  bullet.x = bulletData.x;
+  bullet.y = bulletData.y;
+  bullet.rotation = bulletData.rotation - Math.PI/2;
+  app.stage.addChild(bullet);
+  bullets.push(bullet);
 });
 
 // While game is running
@@ -154,8 +154,8 @@ app.ticker.add(() => {
   });
 
   for (var b = bullets.length - 1; b >= 0; b--) {
-    bullets[b].position.x += Math.cos(bullets[b].rotation) * bulletSpeed;
-    bullets[b].position.y += Math.sin(bullets[b].rotation) * bulletSpeed;
+    bullets[b].x += Math.cos(bullets[b].rotation) * bulletSpeed;
+    bullets[b].y += Math.sin(bullets[b].rotation) * bulletSpeed;
   }
 
   let speed = 5;
@@ -186,8 +186,8 @@ app.ticker.add(() => {
   app.stage.position.y = app.renderer.height / 2 - camera.y;
 
   // Shift UI elements with Camera
-    text.x = player.x + 100;
-    text.y = player.y + 100;
+  text.x = player.x + 100;
+  text.y = player.y + 100;
 
   let rotation = Math.atan2(
     mouse.y - app.renderer.height / 2,
