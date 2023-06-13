@@ -6,9 +6,10 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+const DEV = true;
 let players = {};
 let bullets = {};
-const bulletSpeed = 100;
+const bulletSpeed = 80;
 
 // io connections
 io.on('connection', (socket) => { 
@@ -17,7 +18,7 @@ io.on('connection', (socket) => {
 
     // updates the player
     socket.on("serverUpdateSelf", (playerData) => {
-        let speed = 5;
+        let speed = 7;
         if (playerData.keyboard.shift) {
             speed += 5;
         }
@@ -52,9 +53,9 @@ io.on('connection', (socket) => {
         socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
 
-        if (playerData.health == 0) {
-            console.log(playerData.id + " died");
-            io.emit("notification", playerData.id + " died");
+        if (playerData.health <= 0) {
+            console.log(socket.id + " died");
+            io.emit("notification", socket.id + " died");
             socket.disconnect();
         }
     });
@@ -81,21 +82,23 @@ setInterval(() => {
         // Emit the updated data to the current player
         io.to(playerSocketId).emit("clientUpdateAllEnemies", enemies);
     }
-}, 5);
+}, 10);
 
 // Calculate bullet trajectory (server side) (200 times per second)
 setInterval(() => {
-    io.emit("updateAllBullets", bullets);
+    if (DEV) {
+        io.emit("updateAllBullets", bullets);
+    }
     for (const bulletId in bullets) {
         const bullet = bullets[bulletId];
-        bullet.x += Math.cos(bullet.rotation) * bulletSpeed / 4;
-        bullet.y += Math.sin(bullet.rotation) * bulletSpeed / 4;
+        bullet.x += Math.cos(bullet.rotation) * bulletSpeed;
+        bullet.y += Math.sin(bullet.rotation) * bulletSpeed;
 
         if (bullet.x > 10000 || bullet.x < -10000 || bullet.y > 10000 || bullet.y < -10000 ) {
             delete bullets[bulletId];
         }
     }
-}, 0.1);
+}, 1);
 
 
 setInterval(() => {

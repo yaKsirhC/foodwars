@@ -8,7 +8,7 @@ socket.on("connect", () => {
 });
 
 // BASIC SETUP
-const BOUNDING_BOXES = false;
+let DEV = true;
 
 const app = new Application({
   width: 500,
@@ -153,6 +153,22 @@ function renderPlayer(enemyData) {
   enemySprite.x = enemyData.x;
   enemySprite.y = enemyData.y;
   enemySprite.rotation = enemyData.rotation;
+
+  if (DEV) {
+    if (!boundingBoxes[enemyData.id]) {
+      const boundingBox = new Graphics();
+      boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
+      boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
+      app.stage.addChild(boundingBox);
+      boundingBoxes[enemyData.id] = boundingBox;
+    }
+  
+    const boundingBox = boundingBoxes[enemyData.id];
+    boundingBox.x = enemyData.x;
+    boundingBox.y = enemyData.y;
+    boundingBox.width = 50;
+    boundingBox.height = 50;
+  }
 }
 
 socket.on("clientUpdateAllEnemies", (enemies) => {
@@ -177,8 +193,10 @@ socket.on("clientUpdateAllEnemies", (enemies) => {
 let boundingBoxes = {};
 
 socket.on("clientUpdateSelf", (playerData) => {
-  if (playerData.health < 100) {
+  if (playerData.health <= 100 && playerData.health > 0) {
     healthBarValue.width = playerData.health * 5;
+  } else {
+    healthBarValue.width = 0
   }
 
   player.x = playerData.x;
@@ -186,11 +204,11 @@ socket.on("clientUpdateSelf", (playerData) => {
   player.rotation = playerData.rotation;
   health = playerData.health;
 
-  if (BOUNDING_BOXES) {
+  if (DEV) {
     if (!boundingBoxes[playerData.id]) {
       const boundingBox = new Graphics();
       boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
-      boundingBox.drawRect(-playerData.width / 2, -playerData.height / 2, playerData.width, playerData.height);
+      boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
       app.stage.addChild(boundingBox);
       boundingBoxes[playerData.id] = boundingBox;
     }
@@ -198,14 +216,14 @@ socket.on("clientUpdateSelf", (playerData) => {
     const boundingBox = boundingBoxes[playerData.id];
     boundingBox.x = playerData.x;
     boundingBox.y = playerData.y;
-    boundingBox.width = playerData.width;
-    boundingBox.height = playerData.height;
+    boundingBox.width = 50;
+    boundingBox.height = 50;
   }
 });
 
 // BULLETS
 let bulletSprites = [];
-const bulletSpeed = 100;
+const bulletSpeed = 80;
 
 const bulletTexture = await Assets.load("images/bullet.png");
 
@@ -266,8 +284,22 @@ socket.on("clientUpdateNewBullet", (bulletData) => {
   bulletSprites.push(bullet);
 });
 
+// only runs if DEV is true on server
 socket.on("updateAllBullets", (bulletsData) => {
-  if (BOUNDING_BOXES) {
+  for (let i = bulletSprites.length - 1; i >= 0; i--) {
+    if (bulletSprites[i] !== undefined) {
+      bulletSprites[i].x += Math.cos(bulletSprites[i].rotation) * bulletSpeed;
+      bulletSprites[i].y += Math.sin(bulletSprites[i].rotation) * bulletSpeed;
+    }
+
+    if (bulletSprites[i].x > 10000 || bulletSprites[i].x < -10000 || bulletSprites[i].y > 10000 || bulletSprites[i].y < -10000) {
+      app.stage.removeChild(bulletSprites[i]); // Remove the bullet sprite from the stage
+      bulletSprites.splice(i, 1); // Remove the bullet sprite from the bulletSprites array
+      console.log("deleted bullet");
+    }
+  }
+
+  if (DEV) {
     Object.keys(bulletsData).forEach((bulletId) => {
       if (!boundingBoxes[bulletId]) {
         const boundingBox = new Graphics();
@@ -326,14 +358,11 @@ function notification(text) {
   }, 3000);
 }
 
-
-
 socket.on("notification", (text) => {
   notification(text);
 });
 
-// MAIN GAME LOOP
-app.ticker.add(() => {
+setInterval(() => {
   socket.emit("serverUpdateSelf", {
     id: socket.id,
     health: health,
@@ -345,12 +374,10 @@ app.ticker.add(() => {
     ) + Math.PI / 2, //2 * Math.PI
     keyboard: keyboard,
   });
+}, 10);
 
-  for (var b = bulletSprites.length - 1; b >= 0; b--) {
-    bulletSprites[b].x += Math.cos(bulletSprites[b].rotation) * bulletSpeed;
-    bulletSprites[b].y += Math.sin(bulletSprites[b].rotation) * bulletSpeed;
-  }
-
+// MAIN GAME LOOP
+app.ticker.add(() => {
   // Adjust the camera position to keep the player in the middle
   camera.x = player.x;
   camera.y = player.y;
@@ -378,6 +405,30 @@ app.ticker.add(() => {
 
   notificationContainer.x = camera.x + 550;
   notificationContainer.y = camera.y - 420;
+});
+
+// EXTRA DEV STUFF
+if (DEV) {
+  setInterval(() => {
+    console.log("bullets: " + bulletSprites.length);
+    console.log("boundingBoxes: " + Object.keys(boundingBoxes).length);
+    console.log("notifications: " + notificationContainer.children.length);
+    console.log("enemies: " + Object.keys(enemySprites).length);
+    console.log();
+  }, 1000);
+}
+
+function toggleDEV() {
+  DEV = !DEV;
+  console.log('Variable toggled:', DEV);
+}
+
+// Keydown event listener
+document.addEventListener('keydown', (event) => {
+  // Check if the 'T' key is pressed
+  if (event.key === '`') {
+    toggleDEV();
+  }
 });
 
 // DISPLAY ON CANVAS
