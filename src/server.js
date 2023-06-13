@@ -86,9 +86,7 @@ setInterval(() => {
 
 // Calculate bullet trajectory (server side) (200 times per second)
 setInterval(() => {
-    if (DEV) {
-        io.emit("updateAllBullets", bullets);
-    }
+    io.emit("clientUpdateAllBullets", bullets);
     for (const bulletId in bullets) {
         const bullet = bullets[bulletId];
         bullet.x += Math.cos(bullet.rotation) * bulletSpeed;

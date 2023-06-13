@@ -39,7 +39,7 @@ player.anchor.set(0.5, 0.5);
 let health = 100;
 
 // DRAW UI ELEMENTS
-const coordinatesText = new PIXI.Text("x: " + player.x + " y: " + player.y, {
+const coordinatesText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
   fontFamily: "Arial",
   fontSize: 30,
   fill: 'ffffff',
@@ -48,7 +48,19 @@ coordinatesText.x = 0;
 coordinatesText.y = 0;
 
 setInterval(() => {
-  coordinatesText.text = "x:" + player.x + "y: " + player.y;
+  coordinatesText.text = "(" + player.x + ", " + player.y + ")";
+}, 100);
+
+const FPSText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
+  fontFamily: "Arial",
+  fontSize: 30,
+  fill: 'ffffff',
+});
+FPSText.x = 0;
+FPSText.y = 0;
+
+setInterval(() => {
+  FPSText.text = "FPS: " + app.ticker.FPS.toFixed(2);
 }, 100);
 
 const socketText = new PIXI.Text("SOCKET ID: " + socket.id, {
@@ -139,7 +151,9 @@ function handleMouseMove(event) {
 const enemySprites = {}; // Stores the other player sprites
 
 const enemyTexture = await Assets.load("images/enemies.png");
-function renderPlayer(enemyData) {
+function renderEnemies(enemiesData) {
+  for (const enemyId in enemiesData) {
+    const enemyData = enemiesData[enemyId];
   if (!enemySprites[enemyData.id]) {
     // Create a new PIXI sprite for the player
     const enemySprite = Sprite.from(enemyTexture);
@@ -170,9 +184,10 @@ function renderPlayer(enemyData) {
     boundingBox.height = 50;
   }
 }
+}
 
-socket.on("clientUpdateAllEnemies", (enemies) => {
-  const connectedEnemyIds = Object.keys(enemies);
+socket.on("clientUpdateAllEnemies", (enemiesData) => {
+  const connectedEnemyIds = Object.keys(enemiesData);
   // Iterate over the existing player sprites
   for (const enemyId in enemySprites) {
     // Check if the player is still connected
@@ -184,13 +199,17 @@ socket.on("clientUpdateAllEnemies", (enemies) => {
     }
   }
 
-  for (const enemyId in enemies) {
-    const enemyData = enemies[enemyId];
-    renderPlayer(enemyData);
-  }
+  renderEnemies(enemiesData);
 });
 
 let boundingBoxes = {};
+
+setInterval(() => {
+  Object.keys(boundingBoxes).forEach((id) => { 
+      app.stage.removeChild(boundingBoxes[id]);
+      delete boundingBoxes[id];
+  });
+}, 5000);
 
 socket.on("clientUpdateSelf", (playerData) => {
   if (playerData.health <= 100 && playerData.health > 0) {
@@ -241,7 +260,7 @@ function handleMouseUp(event) {
 }
 
 function emitBullet() {
-  const offsetFactor = 70; // Adjust this value to control the offset
+  const offsetFactor = 80; // Adjust this value to control the offset
   
   socket.emit("serverUpdateNewBullet", {
     id: Math.random(),
@@ -254,16 +273,13 @@ function emitBullet() {
 }
 
 function emitBulletsContinuously() {
-  emitBullet(); // Emit the first bullet immediately
-  
-  // Start emitting bullets continuously at a fixed interval
   emitIntervalId = setInterval(() => {
     if (isMouseDown) {
       emitBullet();
     } else {
       clearInterval(emitIntervalId);
     }
-  }, 200); // Adjust the interval as needed
+  }, 1); // Adjust the interval as needed
 }
 
 // Attach event listeners
@@ -284,8 +300,8 @@ socket.on("clientUpdateNewBullet", (bulletData) => {
   bulletSprites.push(bullet);
 });
 
-// only runs if DEV is true on server
-socket.on("updateAllBullets", (bulletsData) => {
+
+socket.on("clientUpdateAllBullets", (bulletsData) => {
   for (let i = bulletSprites.length - 1; i >= 0; i--) {
     if (bulletSprites[i] !== undefined) {
       bulletSprites[i].x += Math.cos(bulletSprites[i].rotation) * bulletSpeed;
@@ -295,7 +311,6 @@ socket.on("updateAllBullets", (bulletsData) => {
     if (bulletSprites[i].x > 10000 || bulletSprites[i].x < -10000 || bulletSprites[i].y > 10000 || bulletSprites[i].y < -10000) {
       app.stage.removeChild(bulletSprites[i]); // Remove the bullet sprite from the stage
       bulletSprites.splice(i, 1); // Remove the bullet sprite from the bulletSprites array
-      console.log("deleted bullet");
     }
   }
 
@@ -385,8 +400,11 @@ app.ticker.add(() => {
   app.stage.position.y = app.renderer.height / 2 - camera.y;
 
   // Shift UI elements with Camera
-  coordinatesText.x = camera.x;
-  coordinatesText.y = camera.y;
+  coordinatesText.x = camera.x + 775;
+  coordinatesText.y = camera.y + 420;
+
+  FPSText.x = camera.x - 925;
+  FPSText.y = camera.y - 450;
 
   socketText.x = camera.x + 765;
   socketText.y = camera.y + 460;
@@ -442,4 +460,5 @@ app.stage.addChild(healthBar);
 app.stage.addChild(healthBarValue);
 app.stage.addChild(shieldBar);
 app.stage.addChild(coordinatesText);
+app.stage.addChild(FPSText);
 app.stage.addChild(notificationContainer);
