@@ -42,7 +42,7 @@ let health = 100;
 const coordinatesText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
   fontFamily: "Arial",
   fontSize: 30,
-  fill: 'ffffff',
+  fill: "ffffff",
 });
 coordinatesText.x = 0;
 coordinatesText.y = 0;
@@ -54,7 +54,7 @@ setInterval(() => {
 const FPSText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
   fontFamily: "Arial",
   fontSize: 30,
-  fill: 'ffffff',
+  fill: "ffffff",
 });
 FPSText.x = 0;
 FPSText.y = 0;
@@ -66,13 +66,13 @@ setInterval(() => {
 const socketText = new PIXI.Text("SOCKET ID: " + socket.id, {
   fontFamily: "Arial",
   fontSize: 10,
-  fill: 'ffffff',
+  fill: "ffffff",
 });
 socketText.x = 0;
 socketText.y = 0;
 
 const inventory = new Graphics();
-inventory.lineStyle({width: 2, color: 0x000000, alpha: 0.5});
+inventory.lineStyle({ width: 2, color: 0x000000, alpha: 0.5 });
 inventory.beginFill(0x222222);
 inventory.drawRoundedRect(0, 0, 500, 55, 5);
 inventory.endFill();
@@ -80,7 +80,7 @@ inventory.x = 0;
 inventory.y = 0;
 
 const healthBar = new Graphics();
-healthBar.lineStyle({width: 2, color: 0x000000, alpha: 0.5});
+healthBar.lineStyle({ width: 2, color: 0x000000, alpha: 0.5 });
 healthBar.beginFill(0x222222);
 healthBar.drawRoundedRect(0, 0, 500, 30, 5);
 healthBar.endFill();
@@ -88,15 +88,15 @@ healthBar.x = 0;
 healthBar.y = 0;
 
 const healthBarValue = new Graphics();
-healthBarValue.beginFill(0x13EA22);
+healthBarValue.beginFill(0x13ea22);
 healthBarValue.drawRoundedRect(0, 0, 500, 30, 5);
 healthBarValue.endFill();
 healthBarValue.x = 0;
 healthBarValue.y = 0;
 
 const shieldBar = new Graphics();
-shieldBar.lineStyle({width: 3, color: 0x000000, alpha: 0.3});
-shieldBar.beginFill(0x0198EF);
+shieldBar.lineStyle({ width: 3, color: 0x000000, alpha: 0.3 });
+shieldBar.beginFill(0x0198ef);
 shieldBar.drawRoundedRect(0, 0, 500, 25, 5);
 shieldBar.endFill();
 shieldBar.x = 0;
@@ -154,36 +154,36 @@ const enemyTexture = await Assets.load("images/enemies.png");
 function renderEnemies(enemiesData) {
   for (const enemyId in enemiesData) {
     const enemyData = enemiesData[enemyId];
-  if (!enemySprites[enemyData.id]) {
-    // Create a new PIXI sprite for the player
-    const enemySprite = Sprite.from(enemyTexture);
-    enemySprite.scale.set(2, 2);
-    enemySprite.anchor.set(0.5, 0.5);
-    app.stage.addChild(enemySprite);
-    enemySprites[enemyData.id] = enemySprite;
-  }
-
-  const enemySprite = enemySprites[enemyData.id];
-  enemySprite.x = enemyData.x;
-  enemySprite.y = enemyData.y;
-  enemySprite.rotation = enemyData.rotation;
-
-  if (DEV) {
-    if (!boundingBoxes[enemyData.id]) {
-      const boundingBox = new Graphics();
-      boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
-      boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
-      app.stage.addChild(boundingBox);
-      boundingBoxes[enemyData.id] = boundingBox;
+    if (!enemySprites[enemyData.id]) {
+      // Create a new PIXI sprite for the player
+      const enemySprite = Sprite.from(enemyTexture);
+      enemySprite.scale.set(2, 2);
+      enemySprite.anchor.set(0.5, 0.5);
+      app.stage.addChild(enemySprite);
+      enemySprites[enemyData.id] = enemySprite;
     }
-  
-    const boundingBox = boundingBoxes[enemyData.id];
-    boundingBox.x = enemyData.x;
-    boundingBox.y = enemyData.y;
-    boundingBox.width = 50;
-    boundingBox.height = 50;
+
+    const enemySprite = enemySprites[enemyData.id];
+    enemySprite.x = enemyData.x;
+    enemySprite.y = enemyData.y;
+    enemySprite.rotation = enemyData.rotation;
+
+    if (DEV) {
+      if (!boundingBoxes[enemyData.id]) {
+        const boundingBox = new Graphics();
+        boundingBox.lineStyle({ width: 1, color: 0x00ff00, alpha: 1 });
+        boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
+        app.stage.addChild(boundingBox);
+        boundingBoxes[enemyData.id] = boundingBox;
+      }
+
+      const boundingBox = boundingBoxes[enemyData.id];
+      boundingBox.x = enemyData.x;
+      boundingBox.y = enemyData.y;
+      boundingBox.width = 50;
+      boundingBox.height = 50;
+    }
   }
-}
 }
 
 socket.on("clientUpdateAllEnemies", (enemiesData) => {
@@ -205,9 +205,9 @@ socket.on("clientUpdateAllEnemies", (enemiesData) => {
 let boundingBoxes = {};
 
 setInterval(() => {
-  Object.keys(boundingBoxes).forEach((id) => { 
-      app.stage.removeChild(boundingBoxes[id]);
-      delete boundingBoxes[id];
+  Object.keys(boundingBoxes).forEach((id) => {
+    app.stage.removeChild(boundingBoxes[id]);
+    delete boundingBoxes[id];
   });
 }, 5000);
 
@@ -215,7 +215,7 @@ socket.on("clientUpdateSelf", (playerData) => {
   if (playerData.health <= 100 && playerData.health > 0) {
     healthBarValue.width = playerData.health * 5;
   } else {
-    healthBarValue.width = 0
+    healthBarValue.width = 0;
   }
 
   player.x = playerData.x;
@@ -226,12 +226,12 @@ socket.on("clientUpdateSelf", (playerData) => {
   if (DEV) {
     if (!boundingBoxes[playerData.id]) {
       const boundingBox = new Graphics();
-      boundingBox.lineStyle({ width: 1, color: 0x00FF00, alpha: 1 });
+      boundingBox.lineStyle({ width: 1, color: 0x00ff00, alpha: 1 });
       boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
       app.stage.addChild(boundingBox);
       boundingBoxes[playerData.id] = boundingBox;
     }
-  
+
     const boundingBox = boundingBoxes[playerData.id];
     boundingBox.x = playerData.x;
     boundingBox.y = playerData.y;
@@ -247,45 +247,43 @@ const bulletSpeed = 80;
 const bulletTexture = await Assets.load("images/bullet.png");
 
 let isMouseDown = false;
-let emitIntervalId = null;
+let fireIntervalId = null;
 
 function handleMouseDown(event) {
   isMouseDown = true;
-  emitBulletsContinuously();
+  shootBulletsContinuously();
 }
 
 function handleMouseUp(event) {
   isMouseDown = false;
-  clearInterval(emitIntervalId);
+  clearInterval(fireIntervalId);
 }
 
-function emitBullet() {
+function fireBullet() {
   const offsetFactor = 80; // Adjust this value to control the offset
-  
   socket.emit("serverUpdateNewBullet", {
     id: Math.random(),
-    x: player.x + Math.cos(player.rotation - Math.PI/2) * offsetFactor,
-    y: player.y + Math.sin(player.rotation - Math.PI/2) * offsetFactor,
+    x: player.x + Math.cos(player.rotation - Math.PI / 2) * offsetFactor,
+    y: player.y + Math.sin(player.rotation - Math.PI / 2) * offsetFactor,
     width: 40, // width and height really rough estimate of the bullet size. real range 35-45 (idk why)
     height: 40,
-    rotation: player.rotation - Math.PI/2,
+    rotation: player.rotation - Math.PI / 2,
   });
 }
 
-function emitBulletsContinuously() {
-  emitIntervalId = setInterval(() => {
+function shootBulletsContinuously() {
+  fireIntervalId = setInterval(() => {
     if (isMouseDown) {
-      emitBullet();
+      fireBullet();
     } else {
-      clearInterval(emitIntervalId);
+      clearInterval(fireIntervalId);
     }
-  }, 1); // Adjust the interval as needed
+  }, 300); // Adjust the interval as needed
 }
 
 // Attach event listeners
 document.addEventListener("mousedown", handleMouseDown);
 document.addEventListener("mouseup", handleMouseUp);
-
 
 socket.on("clientUpdateNewBullet", (bulletData) => {
   const bullet = Sprite.from(bulletTexture);
@@ -300,7 +298,6 @@ socket.on("clientUpdateNewBullet", (bulletData) => {
   bulletSprites.push(bullet);
 });
 
-
 socket.on("clientUpdateAllBullets", (bulletsData) => {
   for (let i = bulletSprites.length - 1; i >= 0; i--) {
     if (bulletSprites[i] !== undefined) {
@@ -308,7 +305,12 @@ socket.on("clientUpdateAllBullets", (bulletsData) => {
       bulletSprites[i].y += Math.sin(bulletSprites[i].rotation) * bulletSpeed;
     }
 
-    if (bulletSprites[i].x > 10000 || bulletSprites[i].x < -10000 || bulletSprites[i].y > 10000 || bulletSprites[i].y < -10000) {
+    if (
+      bulletSprites[i].x > 10000 ||
+      bulletSprites[i].x < -10000 ||
+      bulletSprites[i].y > 10000 ||
+      bulletSprites[i].y < -10000
+    ) {
       app.stage.removeChild(bulletSprites[i]); // Remove the bullet sprite from the stage
       bulletSprites.splice(i, 1); // Remove the bullet sprite from the bulletSprites array
     }
@@ -318,12 +320,17 @@ socket.on("clientUpdateAllBullets", (bulletsData) => {
     Object.keys(bulletsData).forEach((bulletId) => {
       if (!boundingBoxes[bulletId]) {
         const boundingBox = new Graphics();
-        boundingBox.lineStyle({width: 1, color: 0x00FF00, alpha: 1});
-        boundingBox.drawRect(-bulletsData[bulletId].width / 2, -bulletsData[bulletId].height / 2, bulletsData[bulletId].width, bulletsData[bulletId].height);
+        boundingBox.lineStyle({ width: 1, color: 0x00ff00, alpha: 1 });
+        boundingBox.drawRect(
+          -bulletsData[bulletId].width / 2,
+          -bulletsData[bulletId].height / 2,
+          bulletsData[bulletId].width,
+          bulletsData[bulletId].height
+        );
         app.stage.addChild(boundingBox);
         boundingBoxes[bulletId] = boundingBox;
       }
-  
+
       const boundingBox = boundingBoxes[bulletId];
       boundingBox.x = bulletsData[bulletId].x;
       boundingBox.y = bulletsData[bulletId].y;
@@ -383,16 +390,40 @@ setInterval(() => {
     health: health,
     x: player.x,
     y: player.y,
-    rotation: Math.atan2(
-      mouse.y - app.renderer.height / 2,
-      mouse.x - app.renderer.width / 2
-    ) + Math.PI / 2, //2 * Math.PI
+    rotation:
+      Math.atan2(
+        mouse.y - app.renderer.height / 2,
+        mouse.x - app.renderer.width / 2
+      ) +
+      Math.PI / 2, //2 * Math.PI
     keyboard: keyboard,
   });
 }, 10);
 
+// FRUSTUM CULLING
+
+function hideSpritesOutsideScreen() {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+
+  // Iterate over all sprites
+  app.stage.children.forEach((sprite) => {
+    // Check if the sprite is visible
+    const spriteBounds = sprite.getBounds();
+    const isVisible =
+      spriteBounds.x + spriteBounds.width > 0 &&
+      spriteBounds.x < screenWidth &&
+      spriteBounds.y + spriteBounds.height > 0 &&
+      spriteBounds.y < screenHeight;
+
+    // Hide the sprite if it is not visible
+    sprite.visible = isVisible;
+  });
+}
+
 // MAIN GAME LOOP
 app.ticker.add(() => {
+  hideSpritesOutsideScreen();
   // Adjust the camera position to keep the player in the middle
   camera.x = player.x;
   camera.y = player.y;
@@ -438,17 +469,30 @@ if (DEV) {
 
 function toggleDEV() {
   DEV = !DEV;
-  console.log('Variable toggled:', DEV);
+  console.log("Variable toggled:", DEV);
 }
 
 // Keydown event listener
-document.addEventListener('keydown', (event) => {
+document.addEventListener("keydown", (event) => {
   // Check if the 'T' key is pressed
-  if (event.key === '`') {
+  if (event.key === "`") {
     toggleDEV();
   }
 });
 
+// UTILITY FUNCTIONS
+function frustumCulling(data) {
+  if (
+    data.x > camera.x - app.renderer.width / 2 - 100 &&
+    data.x < camera.x + app.renderer.width / 2 + 100 &&
+    data.y > camera.y - app.renderer.height / 2 - 100 &&
+    data.y < camera.y + app.renderer.height / 2 + 100
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 // DISPLAY ON CANVAS
 document.body.appendChild(app.view);
 app.stage.addChild(backgroundSprite);
