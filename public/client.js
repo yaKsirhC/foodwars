@@ -207,10 +207,13 @@ let boundingBoxes = {};
 
 setInterval(() => {
   Object.keys(boundingBoxes).forEach((id) => {
-    app.stage.removeChild(boundingBoxes[id]);
-    delete boundingBoxes[id];
+    boundingBoxes[id].timer -= 0.01;
+    if (boundingBoxes[id].timer <= 0) {
+      app.stage.removeChild(boundingBoxes[id].box);
+      delete boundingBoxes[id];
+    }
   });
-}, 5000);
+}, 10);
 
 socket.on("clientUpdateSelf", (playerData) => {
   if (playerData.health <= 100 && playerData.health > 0) {
@@ -330,14 +333,17 @@ socket.on("clientUpdateAllBullets", (bulletsData) => {
           bulletsData[bulletId].height
         );
         app.stage.addChild(boundingBox);
-        boundingBoxes[bulletId] = boundingBox;
+        boundingBoxes[bulletId] = {
+          box: boundingBox,
+          timer: 3
+        };
       }
 
       const boundingBox = boundingBoxes[bulletId];
-      boundingBox.x = bulletsData[bulletId].x;
-      boundingBox.y = bulletsData[bulletId].y;
-      boundingBox.width = bulletsData[bulletId].width;
-      boundingBox.height = bulletsData[bulletId].height;
+      boundingBox.box.x = bulletsData[bulletId].x;
+      boundingBox.box.y = bulletsData[bulletId].y;
+      boundingBox.box.width = bulletsData[bulletId].width;
+      boundingBox.box.height = bulletsData[bulletId].height;
     });
   }
 });
@@ -459,15 +465,7 @@ app.ticker.add(() => {
 });
 
 // EXTRA DEV STUFF
-if (DEV) {
-  setInterval(() => {
-    console.log("bullets: " + bulletSprites.length);
-    console.log("boundingBoxes: " + Object.keys(boundingBoxes).length);
-    console.log("notifications: " + notificationContainer.children.length);
-    console.log("enemies: " + Object.keys(enemySprites).length);
-    console.log();
-  }, 1000);
-}
+
 
 function toggleDEV() {
   DEV = !DEV;
