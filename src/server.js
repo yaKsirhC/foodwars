@@ -18,6 +18,10 @@ io.on('connection', (socket) => {
 
     // updates the player
     socket.on("serverUpdateSelf", (playerData) => {
+        if (playerData && players[playerData.id] && players[playerData.id].hasOwnProperty('health') && players[playerData.id].health <= 0) {
+            return;
+        }
+
         let speed = 7;
         if (playerData.keyboard.shift) {
             speed += 5;
@@ -58,11 +62,15 @@ io.on('connection', (socket) => {
         if (playerData.health <= 0) {
             console.log(socket.id + " died");
             io.emit("notification", socket.id + " died");
-            socket.disconnect();
+            return;
         }
     });
 
     socket.on("serverUpdateNewBullet", (bulletData) => {
+        if (players[socket.id] && players[socket.id].hasOwnProperty('health') && players[socket.id].health <= 0) {
+            return;
+        }
+
         bullets[bulletData.id] = bulletData;
         io.emit("clientUpdateNewBullet", bulletData);
     });
