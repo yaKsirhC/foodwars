@@ -9,6 +9,7 @@ socket.on("connect", () => {
 
 // BASIC SETUP
 let DEV = true;
+const playerLength = 70;
 
 const app = new Application({
   width: 500,
@@ -48,7 +49,7 @@ coordinatesText.x = 0;
 coordinatesText.y = 0;
 
 setInterval(() => {
-  coordinatesText.text = "(" + player.x + ", " + player.y + ")";
+  coordinatesText.text = "(" + player.x/50 + ", " + player.y/50 + ")";
 }, 100);
 
 const FPSText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
@@ -172,7 +173,7 @@ function renderEnemies(enemiesData) {
       if (!boundingBoxes[enemyData.id]) {
         const boundingBox = new Graphics();
         boundingBox.lineStyle({ width: 1, color: 0x00ff00, alpha: 1 });
-        boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
+        boundingBox.drawRect(-playerLength / 2, -playerLength / 2, playerLength, playerLength);
         app.stage.addChild(boundingBox);
         boundingBoxes[enemyData.id] = boundingBox;
       }
@@ -180,8 +181,8 @@ function renderEnemies(enemiesData) {
       const boundingBox = boundingBoxes[enemyData.id];
       boundingBox.x = enemyData.x;
       boundingBox.y = enemyData.y;
-      boundingBox.width = 50;
-      boundingBox.height = 50;
+      boundingBox.width = playerLength;
+      boundingBox.height = playerLength;
     }
   }
 }
@@ -227,7 +228,7 @@ socket.on("clientUpdateSelf", (playerData) => {
     if (!boundingBoxes[playerData.id]) {
       const boundingBox = new Graphics();
       boundingBox.lineStyle({ width: 1, color: 0x00ff00, alpha: 1 });
-      boundingBox.drawRect(-50 / 2, -50 / 2, 50, 50);
+      boundingBox.drawRect(-playerLength / 2, -playerLength / 2, playerLength, playerLength);
       app.stage.addChild(boundingBox);
       boundingBoxes[playerData.id] = boundingBox;
     }
@@ -235,14 +236,14 @@ socket.on("clientUpdateSelf", (playerData) => {
     const boundingBox = boundingBoxes[playerData.id];
     boundingBox.x = playerData.x;
     boundingBox.y = playerData.y;
-    boundingBox.width = 50;
-    boundingBox.height = 50;
+    boundingBox.width = playerLength;
+    boundingBox.height = playerLength;
   }
 });
 
 // BULLETS
 let bulletSprites = [];
-const bulletSpeed = 80;
+const bulletSpeed = 15;
 
 const bulletTexture = await Assets.load("images/bullet.png");
 
@@ -260,9 +261,10 @@ function handleMouseUp(event) {
 }
 
 function fireBullet() {
-  const offsetFactor = 80; // Adjust this value to control the offset
+  const offsetFactor = 50; // Adjust this value to control the offset
   socket.emit("serverUpdateNewBullet", {
     id: Math.random(),
+    parent: socket.id,
     x: player.x + Math.cos(player.rotation - Math.PI / 2) * offsetFactor,
     y: player.y + Math.sin(player.rotation - Math.PI / 2) * offsetFactor,
     width: 40, // width and height really rough estimate of the bullet size. real range 35-45 (idk why)

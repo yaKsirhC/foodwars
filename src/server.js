@@ -6,10 +6,10 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-const DEV = true;
 let players = {};
 let bullets = {};
-const bulletSpeed = 80;
+const bulletSpeed = 15;
+const playerLength = 70;
 
 // io connections
 io.on('connection', (socket) => { 
@@ -39,15 +39,17 @@ io.on('connection', (socket) => {
         const playerBounds = {
             x: playerData.x,
             y: playerData.y,
-            width: 50,
-            height: 50
+            width: playerLength,
+            height: playerLength
           };
 
         Object.entries(bullets).forEach(([key, bullet]) => {
-        if (checkCollision(bullet, playerBounds)) {
-            playerData.health -= 10;
-            delete bullets[key];
-        }
+            if (bullet.parent !== socket.id) {
+                if (checkCollision(bullet, playerBounds)) {
+                    playerData.health -= 10;
+                    delete bullets[key];
+                }
+            }
         });
 
         socket.emit("clientUpdateSelf", playerData);
