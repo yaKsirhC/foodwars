@@ -8,7 +8,7 @@ socket.on("connect", () => {
 });
 
 // BASIC SETUP
-let DEV = true;
+let DEV = false;
 const playerLength = 70;
 
 const app = new Application({
@@ -40,7 +40,6 @@ player.anchor.set(0.5, 0.5);
 let health = 100;
 
 // DRAW UI ELEMENTS
-let death = false;
 let UIElements = new PIXI.Container();
 
 const coordinatesText = new PIXI.Text("(" + player.x + ", " + player.y + ")", {
@@ -223,7 +222,8 @@ socket.on("clientUpdateSelf", (playerData) => {
     healthBarValue.width = playerData.health * 5;
   } else {
     healthBarValue.width = 0;
-    UIElements.visible = false; // test idk if it iwaifjofjiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+    app.stage.removeChild(player);
+    app.stage.removeChild(UIElements);
   }
 
   player.x = playerData.x;
@@ -511,3 +511,4 @@ UIElements.addChild(coordinatesText);
 UIElements.addChild(FPSText);
 app.stage.addChild(UIElements);
 app.stage.addChild(notificationContainer);
+console.log(app.stage);

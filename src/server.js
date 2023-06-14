@@ -18,9 +18,12 @@ io.on('connection', (socket) => {
 
     // updates the player
     socket.on("serverUpdateSelf", (playerData) => {
-        if (playerData && players[playerData.id] && players[playerData.id].hasOwnProperty('health') && players[playerData.id].health <= 0) {
-            return;
+        if (players[playerData.id]) {
+            if (players[playerData.id].health <= 0) {
+                return;
+            }            
         }
+
 
         let speed = 7;
         if (playerData.keyboard.shift) {
@@ -89,6 +92,11 @@ setInterval(() => {
         const enemies = { ...players };
         delete enemies[playerSocketId];
 
+        if (enemies[playerSocketId]) {
+            if (enemies[playerSocketId].health <= 0) {
+                delete enemies[playerSocketId];
+            }
+        }
         // Emit the updated data to the current player
         io.to(playerSocketId).emit("clientUpdateAllEnemies", enemies);
     }
