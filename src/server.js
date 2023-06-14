@@ -48,32 +48,42 @@ io.on('connection', (socket) => {
                 if (checkCollision(bullet, playerBounds)) {
                     playerData.health -= 10;
                     delete bullets[key];
+
+                    // ## Fire clientUpdateAllBullets?
                 }
             }
         });
-
+        
         socket.emit("clientUpdateSelf", playerData);
         players[playerData.id] = playerData;
-
+        
         if (playerData.health <= 0) {
             console.log(socket.id + " died");
             io.emit("notification", socket.id + " died");
             socket.disconnect();
+            
+            // ## Fire clientUpdateAllEnemies
         }
+        
     });
-
+    
     socket.on("serverUpdateNewBullet", (bulletData) => {
         bullets[bulletData.id] = bulletData;
         io.emit("clientUpdateNewBullet", bulletData);
+        // ## Fire clientUpdateAllBullets?
+        
     });
 
     socket.on("disconnect", () => {
         console.log("SERVER: socket", socket.id, "disconnected");
         io.emit("notification", socket.id + " disconnected");
-        delete players[socket.id];
+        delete players[socket.id]; 
+
+        // ## Fire clientUpdateAllEnemies with the new player object.
     });
 });
 
+// ## Maybe bind this interval to an event. For example, make this trigger on player death or disconnect
 // Sending x every y seconds
 // Send all player data to clients every 5ms (200 times per second) excluding the player's own data 
 setInterval(() => {
@@ -100,7 +110,7 @@ setInterval(() => {
     }
 }, 1);
 
-
+// ## Maybe use onunload/onbeforeunload on the client to notify the server then let the server fire the clientUpdateAllEnemies event.
 setInterval(() => {
     for (const playerSocketId in players) {
         if (playerSocketId === "undefined") {
@@ -108,7 +118,7 @@ setInterval(() => {
         }
     }
     //console.log("Players", players);
-    console.log(Object.keys(bullets).length);
+    // console.log(Object.keys(bullets).length);
 }, 1500);
 
 // HELPER FUNCTIONS
